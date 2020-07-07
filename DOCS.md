@@ -47,7 +47,7 @@ _**default**_ `''`
 
 _**description**_ GCP project ID; owner of the GKE cluster
 
-_**notes**_ default inferred from the service account credentials provided via [`token`](#token)
+_**notes**_ default inferred from the service account credentials provided via [`google_application_credentials_json`](#service-account-credentials)
 
 _**example**_
 
@@ -64,15 +64,6 @@ steps:
     settings:
       project: my-gcp-project
       # ...
-
-# Drone 0.8
----
-pipeline:
-  # ...
-  deploy:
-    image: docker.pliro.enlyze.com/enlyze/drone-sops-gke
-    project: my-gcp-project
-    # ...
 ```
 
 ### `zone`
@@ -100,15 +91,6 @@ steps:
     settings:
       zone: us-east1-b
       # ...
-
-# Drone 0.8
----
-pipeline:
-  # ...
-  deploy:
-    image: docker.pliro.enlyze.com/enlyze/drone-sops-gke
-    zone: us-east1-b
-    # ...
 ```
 
 ### `region`
@@ -136,15 +118,6 @@ steps:
     settings:
       region: us-west-1
       # ...
-
-# Drone 0.8
----
-pipeline:
-  # ...
-  deploy:
-    image: docker.pliro.enlyze.com/enlyze/drone-sops-gke
-    region: us-west1
-    # ...
 ```
 
 ### `cluster_name`
@@ -172,15 +145,6 @@ steps:
     settings:
       cluster_name: prod
       # ...
-
-# Drone 0.8
----
-pipeline:
-  # ...
-  deploy:
-    image: docker.pliro.enlyze.com/enlyze/drone-sops-gke
-    cluster_name: prod
-    # ...
 ```
 
 ### `wait_deployments`
@@ -212,18 +176,6 @@ steps:
       - statefulset/memcache
       - nginx
       # ...
-
-# Drone 0.8
----
-pipeline:
-  # ...
-  deploy:
-    image: docker.pliro.enlyze.com/enlyze/drone-sops-gke
-    wait_deployments:
-    - deployment/app
-    - statefulset/memcache
-    - nginx
-    # ...
 ```
 
 ### `wait_seconds`
@@ -255,19 +207,6 @@ steps:
       - statefulset/memcache
       - nginx
       # ...
-
-# Drone 0.8
----
-pipeline:
-  # ...
-  deploy:
-    image: docker.pliro.enlyze.com/enlyze/drone-sops-gke
-    wait_seconds: 180
-    wait_deployments:
-    - app
-    - nginx
-    - memcache
-    # ...
 ```
 
 ### `vars`
@@ -319,18 +258,6 @@ steps:
         app_image: gcr.io/google_containers/echoserver:1.4
         env: dev
       # ...
-
-# Drone 0.8
----
-pipeline:
-  # ...
-  deploy:
-    image: docker.pliro.enlyze.com/enlyze/drone-sops-gke
-    vars:
-      app_name: echo
-      app_image: gcr.io/google_containers/echoserver:1.4
-      env: dev
-    # ...
 ```
 
 ### `expand_env_vars`
@@ -374,29 +301,6 @@ steps:
           path: "$${PATH}"
       # ...
 
-# Drone 0.8
----
-pipeline:
-  # ...
-  deploy:
-    image: docker.pliro.enlyze.com/enlyze/drone-sops-gke
-    environment:
-    # ;)
-    - PS1='C:${PWD//\//\\\\}>'
-    expand_env_vars: true
-    vars:
-      # CLOUD_SDK_VERSION (set by google/cloud-sdk) will be expanded
-      message: "deployed using gcloud v$${CLOUD_SDK_VERSION}"
-      # PS1 (set using standard drone `environment` field) will be expanded
-      prompt: "cmd.exe $${PS1}"
-      # HOSTNAME and PATH (set by shell) will not be expanded; the `hostnames` and `env` vars are set to non-string values
-      hostnames:
-      - example.com
-      - blog.example.com
-      - "$${HOSTNAME}"
-      env:
-        path: "$${PATH}"
-    # ...
 ```
 
 ### `kubectl_version`
@@ -424,15 +328,6 @@ steps:
     settings:
       kubectl_version: "1.14"
       # ...
-
-# Drone 0.8
----
-pipeline:
-  # ...
-  deploy:
-    image: docker.pliro.enlyze.com/enlyze/drone-sops-gke
-    kubectl_version: "1.14"
-    # ...
 ```
 
 ### `dry_run`
@@ -458,15 +353,6 @@ steps:
     settings:
       dry_run: true
       # ...
-
-# Drone 0.8
----
-pipeline:
-  # ...
-  deploy:
-    image: docker.pliro.enlyze.com/enlyze/drone-sops-gke
-    dry_run: true
-    # ...
 ```
 
 ### `verbose`
@@ -494,24 +380,16 @@ steps:
     settings:
       verbose: true
       # ...
-
-# Drone 0.8
----
-pipeline:
-  # ...
-  deploy:
-    image: docker.pliro.enlyze.com/enlyze/drone-sops-gke
-    verbose: true
-    # ...
 ```
 
 ## Service Account Credentials
 
 `drone-sops-gke` requires a Google service account and uses its [JSON credential file][service-account] to authenticate.
 
-This must be passed to the plugin under the target `service_account`.
+This must be passed to the plugin as an environment variable called `GOOGLE_APPLICATION_CREDENTIALS_JSON`. While this is a bit long, it better describes
+what's actually inside of there compared to the original name (`token`).
 
-The plugin infers the GCP project from the JSON credentials (`service_account`) and retrieves the GKE cluster credentials.
+If not specified via the `project` setting, the plugin also infers the GCP project from the JSON credentials (`service_account`) and retrieves the GKE cluster credentials.
 
 [service-account]: https://cloud.google.com/storage/docs/authentication#service_accounts
 
@@ -666,13 +544,8 @@ steps:
   - name: gke
     image: docker.pliro.enlyze.com/enlyze/drone-sops-gke
     environment:
-      USER: root
-      TOKEN:
+      GOOGLE_APPLICATION_CREDENTIALS_JSON:
         from_secret: GOOGLE_CREDENTIALS
-      SECRET_API_TOKEN:
-        from_secret: APP_API_KEY
-      SECRET_BASE64_P12_CERT:
-        from_secret: P12_CERT
     settings:
       cluster: my-gke-cluster
       expand_env_vars: true
@@ -683,63 +556,6 @@ steps:
         env: dev
         image: gcr.io/my-gke-project/my-app:${DRONE_COMMIT}
         user: $${USER}
-    when:
-      event: push
-      branch: master
-```
-
-
-### `.drone.yml` for Drone 0.8 and below
-
-Note particularly the `gke:` build step.
-
-```yml
----
-pipeline:
-  build:
-    image: golang:1.8
-    environment:
-      - GOPATH=/drone
-      - CGO_ENABLED=0
-    commands:
-      - go get -t
-      - go test -v -cover
-      - go build -v -a
-    when:
-      event:
-        - push
-        - pull_request
-
-  gcr:
-    image: plugins/gcr
-    registry: us.gcr.io
-    repo: us.gcr.io/my-gke-project/my-app
-    tag: ${DRONE_COMMIT}
-    secrets: [google_credentials]
-    when:
-      event: push
-      branch: master
-
-  gke:
-    image: docker.pliro.enlyze.com/enlyze/drone-sops-gke
-    zone: us-central1-a
-    cluster: my-gke-cluster
-    namespace: ${DRONE_BRANCH}
-    environment:
-      - USER=root
-    expand_env_vars: true
-    vars:
-      image: gcr.io/my-gke-project/my-app:${DRONE_COMMIT}
-      app: my-app
-      env: dev
-      user: $${USER}
-    secrets:
-      - source: GOOGLE_CREDENTIALS
-        target: token
-      - source: APP_API_KEY
-        target: secret_api_token
-      - source: P12_CERT
-        target: secret_base64_p12_cert
     when:
       event: push
       branch: master
@@ -804,23 +620,4 @@ spec:
   backend:
     serviceName: {{.app}}-{{.env}}
     servicePort: 80
-```
-
-### `.kube.sec.yml`
-
-Note that the templated output will not be dumped when debugging.
-
-```yml
----
-apiVersion: v1
-kind: Secret
-
-metadata:
-  name: {{.app}}-{{.env}}
-
-type: Opaque
-
-data:
-  app-api-key: {{.SECRET_APP_API_KEY}}
-  p12-cert: {{.SECRET_BASE64_P12_CERT}}
 ```

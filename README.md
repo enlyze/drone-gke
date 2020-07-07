@@ -67,7 +67,7 @@ export PLUGIN_VARS="$(cat vars.json)"
 docker run --rm \
   -v $(pwd):$(pwd) \
   -w $(pwd) \
-  -e PLUGIN_SERVICE_ACCOUNT="$(cat $SERVICE_ACCOUNT_PATH)" \
+  -e GOOGLE_APPLICATION_CREDENTIALS_JSON="$(cat ${SERVICE_ACCOUNT_PATH})" \
   -e PLUGIN_CLUSTER \
   -e PLUGIN_ZONE \
   -e PLUGIN_NAMESPACE \

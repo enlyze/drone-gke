@@ -34,7 +34,6 @@ const (
 	timeoutCmd     = "timeout"
 	echoCmd        = "echo"
 
-	keyPath          = "/tmp/gcloud.json"
 	nsPath           = "/tmp/namespace.json"
 	templateBasePath = "/tmp"
 )
@@ -71,11 +70,6 @@ func getAppFlags() []cli.Flag {
 			Name:    "verbose",
 			Usage:   "dump available vars and the generated Kubernetes manifest, keeping secrets hidden",
 			EnvVars: []string{"PLUGIN_VERBOSE"},
-		},
-		&cli.StringFlag{
-			Name:    "service-account",
-			Usage:   "service account's `JSON` credentials",
-			EnvVars: []string{"PLUGIN_SERVICE_ACCOUNT", "SERVICE_ACCOUNT"},
 		},
 		&cli.StringFlag{
 			Name:    "project",
@@ -188,13 +182,16 @@ func run(c *cli.Context) error {
 	}
 
 	// Use project if explicitly stated, otherwise infer from the service account token.
+	credentialsPath := os.Getenv("GOOGLE_APPLICATION_CREDENTIALS")
 	project := c.String("project")
 	if project == "" {
 		log("Parsing Project ID from credentials\n")
-		project = projectFromServiceAccount(c.String("service-account"))
-		if project == "" {
-			return fmt.Errorf("Missing required param: project")
+		infered, err := projectFromServiceAccount(credentialsPath)
+		if err != nil {
+			return fmt.Errorf("Could not infer project from credentials: %s", err.Error())
 		}
+
+		project = infered
 	}
 
 	// Use custom kubectl version if provided.
@@ -211,23 +208,12 @@ func run(c *cli.Context) error {
 
 	// Setup execution environment
 	environ := os.Environ()
-	environ = append(environ, fmt.Sprintf("GOOGLE_APPLICATION_CREDENTIALS=%s", keyPath))
 	runner := NewBasicRunner("", environ, os.Stdout, os.Stderr)
 
 	// Auth with gcloud and fetch kubectl credentials
-	if err := fetchCredentials(c, project, runner); err != nil {
+	if err := fetchCredentials(c, credentialsPath, project, runner); err != nil {
 		return err
 	}
-
-	// Delete credentials from filesystem when finishing
-	// Warn if the keyfile can't be deleted, but don't abort.
-	// We're almost certainly running inside an ephemeral container, so the file will be discarded when we're finished anyway.
-	defer func() {
-		err := os.Remove(keyPath)
-		if err != nil {
-			log("Warning: error removing token file: %s\n", err)
-		}
-	}()
 
 	templateString, err := readTemplate()
 	if err != nil || templateString == "" {
@@ -265,9 +251,6 @@ func run(c *cli.Context) error {
 
 	// Apply manifests
 	if err := applyManifest(c, manifest, runner); err != nil {
-		// Print last line of error of applying secret manifest to stderr
-		// Disable it for now as it might still leak secrets
-		// printTrimmedError(&secretStderr, os.Stderr)
 		return fmt.Errorf("Error (kubectl output redacted): %s\n", err)
 	}
 
@@ -281,9 +264,6 @@ func run(c *cli.Context) error {
 
 // checkParams checks required params
 func checkParams(c *cli.Context) error {
-	if c.String("service-account") == "" {
-		return fmt.Errorf("Missing required param: service-account")
-	}
 
 	if c.String("zone") == "" && c.String("region") == "" {
 		return fmt.Errorf("Missing required param: at least one of region or zone must be specified")
@@ -328,13 +308,22 @@ func validateKubectlVersion(c *cli.Context, availableVersions []string) error {
 }
 
 // projectFromServiceAccount gets project id from service account
-func projectFromServiceAccount(j string) string {
-	t := ServiceAccount{}
-	err := json.Unmarshal([]byte(j), &t)
+func projectFromServiceAccount(credentialsPath string) (string, error) {
+	credentials, err := os.Open(credentialsPath)
 	if err != nil {
-		return ""
+		return "", fmt.Errorf("Could not open file: %v", err.Error())
 	}
-	return t.ProjectID
+	defer credentials.Close()
+
+	credentialsBytes, _ := ioutil.ReadAll(credentials)
+
+	t := ServiceAccount{}
+	err = json.Unmarshal(credentialsBytes, &t)
+	if err != nil {
+		return "", fmt.Errorf("Could not unmarshal credentials file: %v", err.Error())
+	}
+
+	return t.ProjectID, nil
 }
 
 // parseVars parses vars (in JSON) and returns a map
@@ -352,15 +341,8 @@ func parseVars(c *cli.Context) (map[string]interface{}, error) {
 }
 
 // fetchCredentials authenticates with gcloud and fetches credentials for kubectl
-func fetchCredentials(c *cli.Context, project string, runner Runner) error {
-	// Write credentials to tmp file to be picked up by the 'gcloud' command.
-	// This is inside the ephemeral plugin container, not on the host.
-	err := ioutil.WriteFile(keyPath, []byte(c.String("service-account")), 0600)
-	if err != nil {
-		return fmt.Errorf("Error writing service account file: %s\n", err)
-	}
-
-	err = runner.Run(gcloudCmd, "auth", "activate-service-account", "--key-file", keyPath)
+func fetchCredentials(c *cli.Context, credentialsPath string, project string, runner Runner) error {
+	err := runner.Run(gcloudCmd, "auth", "activate-service-account", "--key-file", credentialsPath)
 	if err != nil {
 		return fmt.Errorf("Error: %s\n", err)
 	}
