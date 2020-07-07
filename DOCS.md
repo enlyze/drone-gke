@@ -1,4 +1,4 @@
-# drone-gke Usage
+# drone-sops-gke Usage
 
 Use this plugin to deploy Docker images to [Google Container Engine (GKE)][gke].
 
@@ -14,7 +14,7 @@ _**type**_ `string`
 
 _**default**_ `''`
 
-_**description**_ reference to a `drone-gke` Docker image
+_**description**_ reference to a `drone-sops-gke` Docker image
 
 _**example**_
 
@@ -27,7 +27,7 @@ kind: pipeline
 # ...
 steps:
   - name: deploy-gke
-    image: nytimes/drone-gke:0.9
+    image: docker.pliro.enlyze.com/enlyze/drone-sops-gke
     # ...
 
 # Drone 0.8
@@ -35,7 +35,7 @@ steps:
 pipeline:
   # ...
   deploy:
-    image: nytimes/drone-gke:0.9
+    image: docker.pliro.enlyze.com/enlyze/drone-sops-gke
     # ...
 ```
 
@@ -60,7 +60,7 @@ kind: pipeline
 # ...
 steps:
   - name: deploy-gke
-    image: nytimes/drone-gke
+    image: docker.pliro.enlyze.com/enlyze/drone-sops-gke
     settings:
       project: my-gcp-project
       # ...
@@ -70,7 +70,7 @@ steps:
 pipeline:
   # ...
   deploy:
-    image: nytimes/drone-gke
+    image: docker.pliro.enlyze.com/enlyze/drone-sops-gke
     project: my-gcp-project
     # ...
 ```
@@ -96,7 +96,7 @@ kind: pipeline
 # ...
 steps:
   - name: deploy-gke
-    image: nytimes/drone-gke
+    image: docker.pliro.enlyze.com/enlyze/drone-sops-gke
     settings:
       zone: us-east1-b
       # ...
@@ -106,7 +106,7 @@ steps:
 pipeline:
   # ...
   deploy:
-    image: nytimes/drone-gke
+    image: docker.pliro.enlyze.com/enlyze/drone-sops-gke
     zone: us-east1-b
     # ...
 ```
@@ -132,7 +132,7 @@ kind: pipeline
 # ...
 steps:
   - name: deploy-gke
-    image: nytimes/drone-gke
+    image: docker.pliro.enlyze.com/enlyze/drone-sops-gke
     settings:
       region: us-west-1
       # ...
@@ -142,12 +142,12 @@ steps:
 pipeline:
   # ...
   deploy:
-    image: nytimes/drone-gke
+    image: docker.pliro.enlyze.com/enlyze/drone-sops-gke
     region: us-west1
     # ...
 ```
 
-### `cluster`
+### `cluster_name`
 
 _**type**_ `string`
 
@@ -168,9 +168,9 @@ kind: pipeline
 # ...
 steps:
   - name: deploy-gke
-    image: nytimes/drone-gke
+    image: docker.pliro.enlyze.com/enlyze/drone-sops-gke
     settings:
-      cluster: prod
+      cluster_name: prod
       # ...
 
 # Drone 0.8
@@ -178,158 +178,8 @@ steps:
 pipeline:
   # ...
   deploy:
-    image: nytimes/drone-gke
-    cluster: prod
-    # ...
-```
-
-### `template`
-
-_**type**_ `string`
-
-_**default**_ `'.kube.yml'`
-
-_**description**_ path to Kubernetes manifest template
-
-_**notes**_ rendered using the Go [`text/template`](https://golang.org/pkg/text/template/) package.
-If the file does not exist, set `skip_template` to `true`.
-
-_**example**_
-
-```yaml
-# .drone.yml
-
-# Drone 1.0+
----
-kind: pipeline
-# ...
-steps:
-  - name: deploy-gke
-    image: nytimes/drone-gke
-    settings:
-      template: k8s/app.yaml
-      # ...
-
-# Drone 0.8
----
-pipeline:
-  # ...
-  deploy:
-    image: nytimes/drone-gke
-    template: k8s/app.yaml
-    # ...
-```
-
-### `skip_template`
-
-_**type**_ `bool`
-
-_**default**_ `false`
-
-_**description**_ parse and apply the Kubernetes manifest template
-
-_**notes**_ turn off the use of the template, regardless if the file exists or not
-
-_**example**_
-
-```yaml
-# .drone.yml
-
-# Drone 1.0+
----
-kind: pipeline
-# ...
-steps:
-  - name: deploy-gke
-    image: nytimes/drone-gke
-    settings:
-      template: k8s/app.yaml
-      skip_template: true
-      # ...
-
-# Drone 0.8
----
-pipeline:
-  # ...
-  deploy:
-    image: nytimes/drone-gke
-    template: k8s/app.yaml
-    skip_template: true
-    # ...
-```
-
-### `secret_template`
-
-_**type**_ `string`
-
-_**default**_ `'.kube.sec.yml'`
-
-_**description**_ path to Kubernetes [_Secret_ resource](http://kubernetes.io/docs/user-guide/secrets/) manifest template
-
-_**notes**_ rendered using the Go [`text/template`](https://golang.org/pkg/text/template/) package.
-If the file does not exist, set `skip_secret_template` to `true`.
-
-_**example**_
-
-```yaml
-# .drone.yml
-
-# Drone 1.0+
----
-kind: pipeline
-# ...
-steps:
-  - name: deploy-gke
-    image: nytimes/drone-gke
-    settings:
-      secret_template: my-templates/secrets.yaml
-      # ...
-
-# Drone 0.8
----
-pipeline:
-  # ...
-  deploy:
-    image: nytimes/drone-gke
-    secret_template: my-templates/secrets.yaml
-    # ...
-```
-
-### `skip_secret_template`
-
-_**type**_ `bool`
-
-_**default**_ `false`
-
-_**description**_ parse and apply the Kubernetes _Secret_ resource manifest template
-
-_**notes**_ turn off the use of the template, regardless if the file exists or not
-
-_**example**_
-
-```yaml
-# .drone.yml
-
-# Drone 1.0+
----
-kind: pipeline
-# ...
-steps:
-  - name: deploy-gke
-    image: nytimes/drone-gke
-    settings:
-      secret_template: my-templates/secrets.yaml
-      skip_secret_template: true
-      # ...
-
-# Drone 0.8
----
-pipeline:
-  # ...
-  deploy:
-    image: nytimes/drone-gke
-    secret_template: my-templates/secrets.yaml
-    skip_secret_template: true
+    image: docker.pliro.enlyze.com/enlyze/drone-sops-gke
+    cluster_name: prod
     # ...
 ```
 
@@ -341,8 +191,8 @@ _**default**_ `[]`
 
 _**description**_ wait for the given deployments using `kubectl rollout status ...`
 
-_**notes**_ deployments can be specified as `"<type>/<name>"` as expected by `kubectl`.  If 
-just `"<name>"` is given it will be defaulted to `"deployment/<name>"`.  
+_**notes**_ deployments can be specified as `"<type>/<name>"` as expected by `kubectl`.  If
+just `"<name>"` is given it will be defaulted to `"deployment/<name>"`.
 
 _**example**_
 
@@ -355,7 +205,7 @@ kind: pipeline
 # ...
 steps:
   - name: deploy-gke
-    image: nytimes/drone-gke
+    image: docker.pliro.enlyze.com/enlyze/drone-sops-gke
     settings:
       wait_deployments:
       - deployment/app
@@ -368,7 +218,7 @@ steps:
 pipeline:
   # ...
   deploy:
-    image: nytimes/drone-gke
+    image: docker.pliro.enlyze.com/enlyze/drone-sops-gke
     wait_deployments:
     - deployment/app
     - statefulset/memcache
@@ -397,7 +247,7 @@ kind: pipeline
 # ...
 steps:
   - name: deploy-gke
-    image: nytimes/drone-gke
+    image: docker.pliro.enlyze.com/enlyze/drone-sops-gke
     settings:
       wait_seconds: 180
       wait_deployments:
@@ -411,7 +261,7 @@ steps:
 pipeline:
   # ...
   deploy:
-    image: nytimes/drone-gke
+    image: docker.pliro.enlyze.com/enlyze/drone-sops-gke
     wait_seconds: 180
     wait_deployments:
     - app
@@ -462,7 +312,7 @@ kind: pipeline
 # ...
 steps:
   - name: deploy-gke
-    image: nytimes/drone-gke
+    image: docker.pliro.enlyze.com/enlyze/drone-sops-gke
     settings:
       vars:
         app_name: echo
@@ -475,63 +325,11 @@ steps:
 pipeline:
   # ...
   deploy:
-    image: nytimes/drone-gke
+    image: docker.pliro.enlyze.com/enlyze/drone-sops-gke
     vars:
       app_name: echo
       app_image: gcr.io/google_containers/echoserver:1.4
       env: dev
-    # ...
-```
-
-### `secrets`
-
-_**type**_ `map[string]string`
-
-_**default**_ `{}`
-
-_**description**_ variables to use in [`secret_template`](#secret_template); credentials for `drone-gke`
-
-_**notes**_ `TOKEN` is required; see ["Using secrets"](#using-secrets) for details
-
-_**example**_
-
-```yaml
-# .drone.yml
-
-# Drone 1.0+
----
-kind: pipeline
-# ...
-steps:
-  - name: deploy-gke
-    image: nytimes/drone-gke
-    settings:
-      # ...
-    environment:
-      # custom secrets; only available within `secret_template`
-      SECRET_APP_API_KEY:
-        from_secret: APP_API_KEY_DEV
-      SECRET_BASE64_P12_CERT:
-        from_secret: BASE64_P12_CERT_DEV
-      # required by `drone-gke`; not available within templates
-      TOKEN: 
-        from_secret: DRONE_GKE_SERVICE_ACCOUNT_KEY_DEV
-
-# Drone 0.8
----
-pipeline:
-  # ...
-  deploy:
-    image: nytimes/drone-gke
-    secrets:
-    # custom secrets; only available within `secret_template`
-    - source: APP_API_KEY_DEV
-      target: SECRET_APP_API_KEY
-    - source: BASE64_P12_CERT_DEV
-      target: SECRET_BASE64_P12_CERT
-    # required by `drone-gke`; not available within templates
-    - source: DRONE_GKE_SERVICE_ACCOUNT_KEY_DEV
-      target: TOKEN
     # ...
 ```
 
@@ -556,7 +354,7 @@ kind: pipeline
 # ...
 steps:
   - name: deploy-gke
-    image: nytimes/drone-gke
+    image: docker.pliro.enlyze.com/enlyze/drone-sops-gke
     environment:
       # ;)
       PS1: 'C:${PWD//\//\\\\}>'
@@ -581,7 +379,7 @@ steps:
 pipeline:
   # ...
   deploy:
-    image: nytimes/drone-gke
+    image: docker.pliro.enlyze.com/enlyze/drone-sops-gke
     environment:
     # ;)
     - PS1='C:${PWD//\//\\\\}>'
@@ -622,7 +420,7 @@ kind: pipeline
 # ...
 steps:
   - name: deploy-gke
-    image: nytimes/drone-gke
+    image: docker.pliro.enlyze.com/enlyze/drone-sops-gke
     settings:
       kubectl_version: "1.14"
       # ...
@@ -632,7 +430,7 @@ steps:
 pipeline:
   # ...
   deploy:
-    image: nytimes/drone-gke
+    image: docker.pliro.enlyze.com/enlyze/drone-sops-gke
     kubectl_version: "1.14"
     # ...
 ```
@@ -656,7 +454,7 @@ kind: pipeline
 # ...
 steps:
   - name: deploy-gke
-    image: nytimes/drone-gke
+    image: docker.pliro.enlyze.com/enlyze/drone-sops-gke
     settings:
       dry_run: true
       # ...
@@ -666,7 +464,7 @@ steps:
 pipeline:
   # ...
   deploy:
-    image: nytimes/drone-gke
+    image: docker.pliro.enlyze.com/enlyze/drone-sops-gke
     dry_run: true
     # ...
 ```
@@ -692,7 +490,7 @@ kind: pipeline
 # ...
 steps:
   - name: deploy-gke
-    image: nytimes/drone-gke
+    image: docker.pliro.enlyze.com/enlyze/drone-sops-gke
     settings:
       verbose: true
       # ...
@@ -702,24 +500,22 @@ steps:
 pipeline:
   # ...
   deploy:
-    image: nytimes/drone-gke
+    image: docker.pliro.enlyze.com/enlyze/drone-sops-gke
     verbose: true
     # ...
 ```
 
 ## Service Account Credentials
 
-`drone-gke` requires a Google service account and uses its [JSON credential file][service-account] to authenticate.
+`drone-sops-gke` requires a Google service account and uses its [JSON credential file][service-account] to authenticate.
 
-This must be passed to the plugin under the target `token`.
+This must be passed to the plugin under the target `service_account`.
 
-The plugin infers the GCP project from the JSON credentials (`token`) and retrieves the GKE cluster credentials.
+The plugin infers the GCP project from the JSON credentials (`service_account`) and retrieves the GKE cluster credentials.
 
 [service-account]: https://cloud.google.com/storage/docs/authentication#service_accounts
 
-### Setting the JSON token
-
-Improved in Drone 0.5+, it is no longer necessary to align the JSON file.
+### Setting the JSON credential file
 
 #### GUI
 
@@ -747,12 +543,6 @@ If connecting to a [regional cluster](https://cloud.google.com/kubernetes-engine
 If connecting to a [zonal cluster](https://cloud.google.com/kubernetes-engine/docs/concepts/multi-zone-and-regional-clusters#multi-zone), you must provide the `zone` parameter to the plugin and omit the `region` parameter.
 
 The `zone` and `region` parameters are mutually exclusive; providing both to the plugin for the same execution will result in an error.
-
-## Using `secrets`
-
-`drone-gke` also supports creating Kubernetes secrets for you. These secrets should be passed from Drone secrets to the plugin as environment variables with targets with the prefix `secret_`. These secrets will be used as variables in the `secret_template` in their environment variable form (uppercased).
-
-Kubernetes expects secrets to be base64 encoded, `drone-gke` does that for you. If you pass in a secret that is already base64 encoded, please apply the prefix `secret_base64_` and the plugin will not re-encode them.
 
 ## Available vars
 
@@ -798,18 +588,18 @@ To use `$${IMAGE_VERSION}` or `$IMAGE_VERSION`, see the [Drone docs][environment
 
 ### tl;dr
 
-To run `drone-gke` using a different version of `kubectl` than the default, set `kubectl-version` to the version you'd like to use.
+To run `drone-sops-gke` using a different version of `kubectl` than the default, set `kubectl-version` to the version you'd like to use.
 
 For example, to use the **1.14** version of `kubectl`:
 
 ```yml
 # Drone 1.0+
-image: nytimes/drone-gke
+image: docker.pliro.enlyze.com/enlyze/drone-sops-gke
 settings:
   kubectl_version: "1.14"
 
 # Drone 0.8
-image: nytimes/drone-gke
+image: docker.pliro.enlyze.com/enlyze/drone-sops-gke
 kubectl_version: "1.14"
 ```
 
@@ -825,16 +615,16 @@ These "extra" versions are installed alongside the SDK's default `kubectl` versi
 kubectl.$clientVersionMajor.$clientVersionMinor
 ```
 
-To list all of the "extra" `kubectl` versions available within a particular version of `drone-gke`, you can run the following:
+To list all of the "extra" `kubectl` versions available within a particular version of `drone-sops-gke`, you can run the following:
 
 ```sh
-# list "extra" kubectl versions available with nytimes/drone-gke
+# list "extra" kubectl versions available with docker.pliro.enlyze.com/enlyze/drone-sops-gke
 docker run \
   --rm \
   --interactive \
   --tty \
   --entrypoint '' \
-  nytimes/drone-gke list-extra-kubectl-versions
+  docker.pliro.enlyze.com/enlyze/drone-sops-gke list-extra-kubectl-versions
 ```
 
 ## Example reference usage
@@ -874,7 +664,7 @@ steps:
       branch: master
 
   - name: gke
-    image: nytimes/drone-gke
+    image: docker.pliro.enlyze.com/enlyze/drone-sops-gke
     environment:
       USER: root
       TOKEN:
@@ -931,7 +721,7 @@ pipeline:
       branch: master
 
   gke:
-    image: nytimes/drone-gke
+    image: docker.pliro.enlyze.com/enlyze/drone-sops-gke
     zone: us-central1-a
     cluster: my-gke-cluster
     namespace: ${DRONE_BRANCH}

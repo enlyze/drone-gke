@@ -1,6 +1,6 @@
-# drone-gke
+# drone-sops-gke
 
-Drone plugin to deploy container images to Kubernetes on Google Container Engine.
+Drone plugin to deploy container images to Kubernetes on Google Container Engine with kubernetes kustomizations and mozilla sops.
 For the usage information and a listing of the available options please take a look at [the docs](DOCS.md).
 
 Simplify deploying to Google Kubernetes Engine.
@@ -9,21 +9,13 @@ Derive the API endpoints and credentials from the Google credentials and open th
 ## Links
 
 - Usage [documentation](DOCS.md)
-- Docker Hub [release tags](https://hub.docker.com/r/nytimes/drone-gke/tags)
+- Sops [repo](https://github.com/mozilla/sops)
+- Kustomize.io [homepage](https://kustomize.io)
 - Drone.io [builds](https://cloud.drone.io/nytimes/drone-gke)
 - Contributing [documentation](CONTRIBUTING.md)
 
 ## Releases and versioning
 
-### Tool
-
-This tool follows [semantic versioning](https://semver.org/).
-
-Use the minor version (`x.X`) releases for stable use cases (eg 0.9).
-Changes are documented in the [release notes](https://github.com/nytimes/drone-gke/releases).
-
-- Pushes to the [`master`](https://github.com/nytimes/drone-gke/tree/master) branch will update the image tagged `latest`.
-- Releases will create the images with each major/minor/patch tag values (eg `0.7.1` and `0.7`).
 
 ### Kubernetes API
 
@@ -48,16 +40,20 @@ Executing locally from the working directory:
 cd local-example/
 
 # Set to the path of your GCP service account JSON-formatted key file
-export JSON_TOKEN_FILE=xxx
+# This must have both, GKE and KMS rights within the GCP project
+export SERVICE_ACCOUNT_PATH=/home/my-user/credentials.json
 
 # Set to your cluster
-export PLUGIN_CLUSTER=yyy
+export PLUGIN_CLUSTER_NAME=yyy
 
 # Set to your cluster's zone
 export PLUGIN_ZONE=zzz
 
+# the kustomization overlay to use
+export PLUGIN_OVERLAY=development
+
 # Set to a namespace within your cluster's
-export PLUGIN_NAMESPACE=drone-gke
+export PLUGIN_NAMESPACE=my-supercool-namespace
 
 # Example variables referenced within .kube.yml
 export PLUGIN_VARS="$(cat vars.json)"
@@ -67,22 +63,17 @@ export PLUGIN_VARS="$(cat vars.json)"
 #   "image": "gcr.io/google_containers/echoserver:1.4"
 # }
 
-# Example secrets referenced within .kube.sec.yml
-export SECRET_APP_API_KEY=123
-export SECRET_BASE64_P12_CERT="cDEyCg=="
-
 # Execute the plugin
 docker run --rm \
   -v $(pwd):$(pwd) \
   -w $(pwd) \
-  -e PLUGIN_TOKEN="$(cat $JSON_TOKEN_FILE)" \
+  -e PLUGIN_SERVICE_ACCOUNT="$(cat $SERVICE_ACCOUNT_PATH)" \
   -e PLUGIN_CLUSTER \
   -e PLUGIN_ZONE \
   -e PLUGIN_NAMESPACE \
+  -e PLUGIN_OVERLAY \
   -e PLUGIN_VARS \
-  -e SECRET_APP_API_KEY \
-  -e SECRET_BASE64_P12_CERT \
-  nytimes/drone-gke --dry-run --verbose
+  docker.pliro.enlyze.com/enlyze/drone-sops-gke --dry-run --verbose
 
 # Remove --dry-run to deploy
 ```
