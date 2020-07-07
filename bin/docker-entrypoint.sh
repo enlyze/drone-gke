@@ -11,7 +11,12 @@ chmod 600 "${CREDENTIALS_PATH}"
 # let's set this to the global application credentials here
 export GOOGLE_APPLICATION_CREDENTIALS="${CREDENTIALS_PATH}"
 
-kustomize build --enable_alpha_plugins templates/overlays/${PLUGIN_OVERLAY} | drone-gke "$@"
+if [[ ! -d "${PLUGIN_OVERLAY}" ]]
+then
+    "Invalid overlay ${PLUGIN_OVERLAY}"
+    exit 1
+fi
+kustomize build --enable_alpha_plugins "${PLUGIN_OVERLAY}" | drone-gke "$@"
 
 # clean that up before we go
 rm -f "${CREDENTIALS_PATH}"

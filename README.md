@@ -50,7 +50,7 @@ export PLUGIN_CLUSTER_NAME=yyy
 export PLUGIN_ZONE=zzz
 
 # the kustomization overlay to use
-export PLUGIN_OVERLAY=development
+export PLUGIN_OVERLAY=path/to/overlay-dir
 
 # Set to a namespace within your cluster's
 export PLUGIN_NAMESPACE=my-supercool-namespace
