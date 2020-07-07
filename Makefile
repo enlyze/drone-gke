@@ -20,8 +20,8 @@ git_current_branch = $(shell $(git) rev-parse --abbrev-ref HEAD)
 git_current_revision = $(shell $(git) rev-parse --short HEAD)
 
 # plugin's docker options
-docker_default_repo_name = nytimes
-docker_image_name = drone-gke
+docker_default_repo_name = docker.pliro.enlyze.com/enlyze
+docker_image_name = drone-sops-gke
 docker_default_tag = latest
 ifneq ($(git_current_branch), $(git_default_branch))
 	# if current branch name is NOT .git/refs/remotes/origin/HEAD (i.e., master)
