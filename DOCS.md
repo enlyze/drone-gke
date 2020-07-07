@@ -20,21 +20,11 @@ _**example**_
 
 ```yaml
 # .drone.yml
-
-# Drone 1.0+
 ---
 kind: pipeline
 # ...
 steps:
   - name: deploy-gke
-    image: docker.pliro.enlyze.com/enlyze/drone-sops-gke
-    # ...
-
-# Drone 0.8
----
-pipeline:
-  # ...
-  deploy:
     image: docker.pliro.enlyze.com/enlyze/drone-sops-gke
     # ...
 ```
@@ -53,8 +43,6 @@ _**example**_
 
 ```yaml
 # .drone.yml
-
-# Drone 1.0+
 ---
 kind: pipeline
 # ...
@@ -80,8 +68,6 @@ _**example**_
 
 ```yaml
 # .drone.yml
-
-# Drone 1.0+
 ---
 kind: pipeline
 # ...
@@ -107,8 +93,6 @@ _**example**_
 
 ```yaml
 # .drone.yml
-
-# Drone 1.0+
 ---
 kind: pipeline
 # ...
@@ -134,8 +118,6 @@ _**example**_
 
 ```yaml
 # .drone.yml
-
-# Drone 1.0+
 ---
 kind: pipeline
 # ...
@@ -162,8 +144,6 @@ _**example**_
 
 ```yaml
 # .drone.yml
-
-# Drone 1.0+
 ---
 kind: pipeline
 # ...
@@ -192,8 +172,6 @@ _**example**_
 
 ```yaml
 # .drone.yml
-
-# Drone 1.0+
 ---
 kind: pipeline
 # ...
@@ -244,8 +222,6 @@ _**example**_
 
 ```yaml
 # .drone.yml
-
-# Drone 1.0+
 ---
 kind: pipeline
 # ...
@@ -274,8 +250,6 @@ _**example**_
 
 ```yaml
 # .drone.yml
-
-# Drone 1.0+
 ---
 kind: pipeline
 # ...
@@ -317,8 +291,6 @@ _**example**_
 
 ```yaml
 # .drone.yml
-
-# Drone 1.0+
 ---
 kind: pipeline
 # ...
@@ -342,8 +314,6 @@ _**example**_
 
 ```yaml
 # .drone.yml
-
-# Drone 1.0+
 ---
 kind: pipeline
 # ...
@@ -369,8 +339,6 @@ _**example**_
 
 ```yaml
 # .drone.yml
-
-# Drone 1.0+
 ---
 kind: pipeline
 # ...
@@ -386,8 +354,16 @@ steps:
 
 `drone-sops-gke` requires a Google service account and uses its [JSON credential file][service-account] to authenticate.
 
-This must be passed to the plugin as an environment variable called `GOOGLE_APPLICATION_CREDENTIALS_JSON`. While this is a bit long, it better describes
-what's actually inside of there compared to the original name (`token`).
+This must be passed to the plugin as an environment variable called `GOOGLE_APPLICATION_CREDENTIALS_JSON`. While this is a bit long, it better describes what's actually inside of there compared to the original name (`token`).
+```yaml
+# .drone.yml
+---
+kind: pipeline
+# ...
+environment:
+  GOOGLE_APPLICATION_CREDENTIALS_JSON:
+    from_secret: GOOGLE_CREDENTIALS
+```
 
 If not specified via the `project` setting, the plugin also infers the GCP project from the JSON credentials (`service_account`) and retrieves the GKE cluster credentials.
 
@@ -444,15 +420,13 @@ These variables are always available to reference in any manifest, and cannot be
 It may be desired to reference an environment variable for use in the Kubernetes manifest.
 In order to do so in `vars`, the `expand_env_vars` must be set to `true`.
 
-For example when using `drone deploy org/repo 5 production -p IMAGE_VERSION=1.0`, to get `IMAGE_VERSION` in `vars`:
+For example when using `drone build promote org/repo 5 production -p IMAGE_VERSION=1.0`, to get `IMAGE_VERSION` in `vars`:
 
 ```yml
 expand_env_vars: true
 vars:
   image: my-image:$${IMAGE_VERSION}
 ```
-
-The equivalent command for Drone 1.0 and above would be: `drone build promote org/repo 5 production -p IMAGE_VERSION=1.0`
 
 The plugin will [expand the environment variable][expand] for the template variable.
 
@@ -471,14 +445,9 @@ To run `drone-sops-gke` using a different version of `kubectl` than the default,
 For example, to use the **1.14** version of `kubectl`:
 
 ```yml
-# Drone 1.0+
 image: docker.pliro.enlyze.com/enlyze/drone-sops-gke
 settings:
   kubectl_version: "1.14"
-
-# Drone 0.8
-image: docker.pliro.enlyze.com/enlyze/drone-sops-gke
-kubectl_version: "1.14"
 ```
 
 This will configure the plugin to execute `/google-cloud-sdk/bin/kubectl.1.14` instead of `/google-cloud-sdk/bin/kubectl` for all `kubectl` commands.
@@ -506,8 +475,6 @@ docker run \
 ```
 
 ## Example reference usage
-
-### `.drone.yml` for Drone 1.0+
 
 Note particularly the `gke:` build step.
 ```yml
@@ -559,65 +526,4 @@ steps:
     when:
       event: push
       branch: master
-```
-
-### `.kube.yml`
-
-Note the three Kubernetes yml resource manifests separated by `---`.
-
-```yml
----
-apiVersion: apps/v1
-kind: Deployment
-
-metadata:
-  name: {{.app}}-{{.env}}
-
-spec:
-  replicas: 3
-  template:
-    metadata:
-      labels:
-        app: {{.app}}
-        env: {{.env}}
-    spec:
-      containers:
-        - name: app
-          image: {{.image}}
-          ports:
-            - containerPort: 8000
-          env:
-            - name: APP_NAME
-              value: {{.app}}
-            - name: USER
-              value: {{.user}}
-            - name: APP_API_KEY
-              valueFrom:
-                secretKeyRef:
-                  name: {{.app}}-{{.env}}
-                  key: app-api-key
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: {{.app}}-{{.env}}
-spec:
-  type: NodePort
-  selector:
-    app: {{.app}}
-    env: {{.env}}
-  ports:
-    - port: 80
-      targetPort: 8000
-      protocol: TCP
-
----
-apiVersion: networking.k8s.io/v1beta1
-kind: Ingress
-metadata:
-  name: {{.app}}-{{.env}}
-spec:
-  backend:
-    serviceName: {{.app}}-{{.env}}
-    servicePort: 80
 ```
