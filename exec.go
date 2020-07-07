@@ -1,14 +1,14 @@
 package main
 
 import (
-	"fmt"
 	"io"
 	"os/exec"
-	"strings"
 )
 
 type Runner interface {
 	Run(name string, arg ...string) error
+	Stdout() io.Writer
+	Stderr() io.Writer
 }
 
 type BasicRunner struct {
@@ -36,10 +36,13 @@ func (e *BasicRunner) Run(name string, arg ...string) error {
 	cmd.Stdout = e.stdout
 	cmd.Stderr = e.stderr
 
-	// TODO: Extract this
-	fmt.Println()
-	fmt.Println("$", strings.Join(cmd.Args, " "))
-	//--
-
 	return cmd.Run()
+}
+
+func (e *BasicRunner) Stdout() io.Writer {
+	return e.stdout
+}
+
+func (e *BasicRunner) Stderr() io.Writer {
+	return e.stderr
 }
