@@ -489,8 +489,8 @@ func setNamespace(c *cli.Context, project string, runner Runner) error {
 	// Ensure the namespace exists, without errors (unlike `kubectl create namespace`).
 	log("Ensuring the %s namespace exists\n", namespace)
 
-	cmd, args := applyCmd(c.Bool("dry-run"), nsManifest)
-	if err := runner.Run(cmd, args...); err != nil {
+	cmd, args := applyCmd(c.Bool("dry-run"))
+	if err := runner.RunWithPipedInput(nsManifest, cmd, args...); err != nil {
 		return fmt.Errorf("Error: %s\n", err)
 	}
 
@@ -504,8 +504,8 @@ func applyManifest(c *cli.Context, manifest string, runner Runner) error {
 	log("Validating Kubernetes manifests with a dry-run\n")
 
 	if !c.Bool("dry-run") {
-		cmd, args := applyCmd(true, manifest)
-		if err := runner.Run(cmd, args...); err != nil {
+		cmd, args := applyCmd(true)
+		if err := runner.RunWithPipedInput(manifest, cmd, args...); err != nil {
 			log("%s", runner.Stdout())
 			log("%s", runner.Stderr())
 			return fmt.Errorf("Error: %s\n", err)
@@ -514,8 +514,8 @@ func applyManifest(c *cli.Context, manifest string, runner Runner) error {
 	}
 
 	// Actually apply Kubernetes manifests.
-	cmd, args := applyCmd(c.Bool("dry-run"), manifest)
-	if err := runner.Run(cmd, args...); err != nil {
+	cmd, args := applyCmd(c.Bool("dry-run"))
+	if err := runner.RunWithPipedInput(manifest, cmd, args...); err != nil {
 		return fmt.Errorf("Error: %s\n", err)
 	}
 
@@ -569,24 +569,21 @@ func waitForRollout(c *cli.Context, runner Runner) error {
 	return nil
 }
 
-func applyCmd(dryrun bool, manifest string) (string, []string) {
+func applyCmd(dryrun bool) (string, []string) {
 
-	dryrunArg := ""
-	if dryrun {
-		dryrunArg = "--dry-run"
-	}
-
-	apply := fmt.Sprintf(
-		"echo '%s' | kubectl apply --record %s -f -",
-		manifest,
-		dryrunArg,
-	)
 	args := []string{
-		"-c",
-		apply,
+		"apply",
+		"--record",
 	}
 
-	return "sh", args
+	if dryrun {
+		args = append(args, "--dry-run")
+	}
+
+	args = append(args, "-f", "-")
+
+	return kubectlCmd, args
+
 }
 
 // printTrimmedError prints the last line of stderrbuf to dest
