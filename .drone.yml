@@ -10,7 +10,7 @@ steps:
 - name: Build and push docker image
   image: plugins/docker
   settings:
-    registry: docker.pliro.enlyze.com
-    repo: enlyze/drone-sops-gke
+    repo: docker.pliro.enlyze.com/enlyze/drone-sops-gke
+    cache_from: docker.pliro.enlyze.com/enlyze/drone-sops-gke
     auto_tag: true
     custom_dns: 10.20.191.1
