@@ -14,5 +14,3 @@ steps:
     repo: enlyze/drone-sops-gke
     auto_tag: true
     custom_dns: 10.20.191.1
-    build_args:
-      - GCLOUD_SDK_TAG=alpine
