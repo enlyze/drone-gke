@@ -12,7 +12,7 @@ RUN \
   gcloud --no-user-output-enabled components install kubectl && \
     rm -rf /google-cloud-sdk/.install
 
-RUN wget https://github.com/mozilla/sops/releases/download/v3.5.0/sops-v3.5.0.linux -o /usr/local/bin/sops && \
+RUN wget https://github.com/mozilla/sops/releases/download/v3.6.1/sops-v3.6.1.linux -o /usr/local/bin/sops && \
     chmod +x /usr/local/bin/sops
 
 RUN echo "install kustomize" && \
